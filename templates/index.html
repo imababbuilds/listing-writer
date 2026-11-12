@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Listing Writer</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg: #070714;
+      --card: #101026;
+      --field: #0b0b1f;
+      --border: #2b2b5e;
+      --text: #e4e4ff;
+      --muted: #8080b0;
+      --cyan: #00f0ff;
+      --magenta: #ff2bd6;
+      --violet: #8b5cf6;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: var(--bg);
+      background-image:
+        radial-gradient(circle at 15% 0%, rgba(139, 92, 246, 0.18), transparent 40%),
+        radial-gradient(circle at 90% 100%, rgba(255, 43, 214, 0.12), transparent 40%);
+      background-attachment: fixed;
+      color: var(--text);
+      color-scheme: dark;
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 28px 40px;
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 {
+      margin: 0;
+      font-size: 30px;
+      letter-spacing: 1px;
+      background: linear-gradient(90deg, var(--cyan), var(--magenta));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    header p { margin: 6px 0 0; color: var(--muted); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      padding: 32px 40px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 0 24px rgba(139, 92, 246, 0.12);
+    }
+    .card h2 { margin-top: 0; color: var(--cyan); letter-spacing: 0.5px; }
+
+    label { display: block; margin-top: 16px; font-weight: 600; color: var(--text); }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      margin-top: 6px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--field);
+    }
+    input::placeholder, textarea::placeholder { color: #55558a; }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--cyan);
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.35);
+    }
+    input[type="file"]::file-selector-button {
+      margin-right: 12px;
+      padding: 6px 12px;
+      border: 1px solid var(--violet);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    /* The AI settings box at the top of the form */
+    .settings {
+      padding: 4px 16px 16px;
+      margin-bottom: 8px;
+      border: 1px dashed var(--violet);
+      border-radius: 14px;
+      background: rgba(139, 92, 246, 0.06);
+    }
+    .settings h3 {
+      margin: 14px 0 0;
+      font-size: 14px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--magenta);
+    }
+    .hint { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border-radius: 12px;
+    }
+
+    #btn {
+      margin-top: 24px;
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #07070f;
+      background: linear-gradient(90deg, var(--cyan), var(--magenta));
+      border: none;
+      box-shadow: 0 0 18px rgba(0, 240, 255, 0.35);
+    }
+    #btn:hover { filter: brightness(1.12); }
+    #btn:disabled { filter: grayscale(0.6) brightness(0.7); cursor: wait; }
+
+    .copy-btn {
+      padding: 8px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--cyan);
+      background: transparent;
+      border: 1px solid var(--cyan);
+    }
+    .copy-btn:hover { background: rgba(0, 240, 255, 0.12); }
+    .copy-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .toolbar { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+
+    #photoPreview {
+      display: none;
+      width: 100%;
+      max-height: 280px;
+      object-fit: cover;
+      border-radius: 14px;
+      border: 1px solid var(--magenta);
+      box-shadow: 0 0 16px rgba(255, 43, 214, 0.25);
+      margin-bottom: 14px;
+    }
+
+    #output {
+      min-height: 260px;
+      margin-top: 0;
+      line-height: 1.6;
+      resize: vertical;
+    }
+
+    #status { min-height: 20px; margin-top: 10px; font-size: 14px; color: var(--magenta); }
+
+    @media (max-width: 800px) {
+      .layout { grid-template-columns: 1fr; padding: 20px; }
+      header { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>LISTING WRITER</h1>
+    <p>Turn property details into a listing that sells. Bring your own AI key.</p>
+  </header>
+
+  <div class="layout">
+    <div class="card">
+      <h2>Property details</h2>
+      <form id="form">
+
+        <div class="settings">
+          <h3>AI settings</h3>
+
+          <label>AI provider
+            <select name="provider" id="provider">
+              <option value="openai">OpenAI (ChatGPT / Codex)</option>
+              <option value="anthropic">Anthropic (Claude)</option>
+              <option value="gemini">Google Gemini</option>
+              <option value="custom">Custom (OpenAI-compatible)</option>
+            </select>
+          </label>
+
+          <label>API key
+            <input type="password" name="api_key" autocomplete="off"
+                   placeholder="Paste your key (blank = use .env)">
+          </label>
+          <p class="hint">Your key goes only to your own local server and the AI provider. It is never stored.</p>
+
+          <label>Model (optional)
+            <input name="model" placeholder="Leave blank for the default">
+          </label>
+
+          <label id="baseUrlRow" style="display:none">Base URL
+            <input name="base_url" placeholder="https://your-provider.com/v1">
+          </label>
+        </div>
+
+        <label>Location
+          <input name="location" placeholder="Austin, TX" required>
+        </label>
+
+        <div class="row">
+          <label>Bedrooms
+            <select name="bedrooms">
+              <option>Studio</option>
+              <option>1</option><option>2</option><option selected>3</option>
+              <option>4</option><option>5</option><option>6+</option>
+            </select>
+          </label>
+          <label>Bathrooms
+            <select name="bathrooms">
+              <option>1</option><option>1.5</option>
+              <option selected>2</option><option>2.5</option>
+              <option>3</option><option>3.5</option>
+              <option>4</option><option>4.5</option><option>5+</option>
+            </select>
+          </label>
+        </div>
+
+        <label>Style
+          <select name="style">
+            <option>Luxury</option>
+            <option>Cozy family home</option>
+            <option>Modern minimalist</option>
+            <option>Investor-friendly</option>
+          </select>
+        </label>
+
+        <label>Key features
+          <textarea name="features" rows="4" placeholder="Pool, renovated kitchen, quiet cul-de-sac"></textarea>
+        </label>
+
+        <label>Property photo (optional)
+          <input type="file" name="photo" id="photo" accept="image/*">
+        </label>
+
+        <button type="submit" id="btn">Generate listing</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Your listing</h2>
+
+      <img id="photoPreview" alt="Property photo">
+
+      <div class="toolbar">
+        <button type="button" class="copy-btn" id="copyText" disabled>Copy text</button>
+        <button type="button" class="copy-btn" id="copyPhoto" style="display:none">Copy photo</button>
+      </div>
+
+      <textarea id="output" placeholder="Your listing will appear here. You can edit it directly."></textarea>
+      <div id="status"></div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("form");
+    const btn = document.getElementById("btn");
+    const output = document.getElementById("output");
+    const status = document.getElementById("status");
+    const photoInput = document.getElementById("photo");
+    const photoPreview = document.getElementById("photoPreview");
+    const copyText = document.getElementById("copyText");
+    const copyPhoto = document.getElementById("copyPhoto");
+    const provider = document.getElementById("provider");
+    const baseUrlRow = document.getElementById("baseUrlRow");
+
+    // Show the Base URL field only for the Custom provider
+    provider.addEventListener("change", () => {
+      baseUrlRow.style.display = provider.value === "custom" ? "block" : "none";
+    });
+
+    // Show the photo as soon as it is chosen
+    photoInput.addEventListener("change", () => {
+      const file = photoInput.files[0];
+      if (file) {
+        photoPreview.src = URL.createObjectURL(file);
+        photoPreview.style.display = "block";
+        copyPhoto.style.display = "inline-block";
+      } else {
+        photoPreview.style.display = "none";
+        copyPhoto.style.display = "none";
+      }
+    });
+
+    // Enable the copy button only when there is text
+    output.addEventListener("input", () => {
+      copyText.disabled = output.value.trim() === "";
+    });
+
+    function flash(button, message) {
+      const original = button.textContent;
+      button.textContent = message;
+      setTimeout(() => (button.textContent = original), 1500);
+    }
+
+    copyText.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(output.value);
+        flash(copyText, "Copied!");
+      } catch (err) {
+        status.textContent = "Copy failed. Select the text and press Cmd+C instead.";
+      }
+    });
+
+    // The clipboard only accepts PNG images, so convert the photo first
+    function toPngBlob(file) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          canvas.getContext("2d").drawImage(img, 0, 0);
+          canvas.toBlob((blob) => (blob ? resolve(blob) : reject()), "image/png");
+        };
+        img.onerror = reject;
+        img.src = URL.createObjectURL(file);
+      });
+    }
+
+    copyPhoto.addEventListener("click", async () => {
+      const file = photoInput.files[0];
+      if (!file) return;
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({ "image/png": toPngBlob(file) }),
+        ]);
+        flash(copyPhoto, "Copied!");
+      } catch (err) {
+        status.textContent = "Could not copy the photo. Right-click it and choose Copy Image.";
+      }
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      btn.disabled = true;
+      btn.textContent = "Writing...";
+      status.textContent = "";
+
+      try {
+        const res = await fetch("/generate", {
+          method: "POST",
+          body: new FormData(form),
+        });
+        const result = await res.json();
+        if (result.listing) {
+          output.value = result.listing;
+          copyText.disabled = false;
+        } else {
+          status.textContent = result.error || "Something went wrong.";
+        }
+      } catch (err) {
+        status.textContent = "Could not reach the server.";
+      }
+
+      btn.disabled = false;
+      btn.textContent = "Generate listing";
+    });
+  </script>
+</body>
+</html>
