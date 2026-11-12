@@ -5,6 +5,16 @@ using **your own AI key**. Works with OpenAI, Anthropic (Claude), Google
 Gemini, or any OpenAI-compatible service. The listing is editable, with copy
 buttons for the text and photo.
 
+![Listing Writer screenshot](docs/screenshot-index-page.png)
+
+## Features
+
+- Pick your AI provider: OpenAI, Claude, Gemini, or a custom OpenAI-compatible URL
+- Upload a property photo and the AI works visible details into the listing
+- Edit the generated listing directly in the page
+- One-click copy for the text and the photo
+- Your key stays on your own computer and is never stored
+
 ## Setup
 
 1. Clone the repo and enter the folder:
@@ -48,11 +58,20 @@ blank, the app uses the one from `.env`.
 A ChatGPT or Claude chat subscription does not include API access. API usage is
 billed separately by each provider.
 
+## Custom provider
+
+Choose "Custom (OpenAI-compatible)" to use any service that follows the OpenAI
+API format. Enter its base URL (for example `https://example.com/v1`) and your
+key for that service.
+
 ## Notes
 
 - Your key goes only to the server running on your own computer and then to
   the AI provider. It is never stored.
 - Default model names change over time. If one stops working, type a current
   model name into the "Model" field.
-- The "Custom" option works with any OpenAI-compatible service. Enter its
-  base URL (for example `https://example.com/v1`).
+- Photos must be under 5 MB.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
